@@ -24,6 +24,12 @@
 #define sensorDDR DDRC
 #define sensorPin PINC
 
+// TIMER
+#define timer5A TCCR5A
+#define timer5B TCCR5B
+#define timerVal OCR5A
+#define timer5Interrupt TIMSK5
+
 // UART THINGS
 #define BAUD 19200
 #define MYUBRR (F_CPU/16/BAUD-1)
@@ -52,3 +58,5 @@ void UART_putChar(uint8_t c);
 void UART_putString(uint8_t* buf);
 uint8_t UART_getChar();
 uint8_t UART_getString(uint8_t* buf);
+void timer_init(volatile uint8_t* timerA, volatile uint8_t* timerB);
+void enable_timer_interrupt(volatile uint8_t* timer_interrupt);

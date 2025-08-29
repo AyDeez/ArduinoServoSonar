@@ -106,3 +106,14 @@ uint8_t UART_getString(uint8_t* buf) {
         }
     }
 }
+
+void timer_init(volatile uint8_t* timerA, volatile uint8_t* timerB) {
+    *timerA = 0;
+    *timerB = (1 << WGM52) | (1 << CS50) | (1 << CS52);
+    uint16_t ocrval = (uint16_t)(15.625 * DEFAULT_SAMPLING_FREQ);
+    timerVal = ocrval;
+}
+
+void enable_timer_interrupt(volatile uint8_t* timer_interrupt) {
+    *timer_interrupt |= (1 << OCIE5A);
+}
