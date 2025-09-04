@@ -1,0 +1,7 @@
+# vscode folder
+.vscode
+
+# build files
+*.o
+*.hex
+*.elf
