@@ -1,0 +1,17 @@
+############################
+#                          #
+#      gitignore file      #
+#                          #
+############################
+
+
+# vscode folder
+.vscode/
+
+
+# object files
+*.o
+
+
+# elf files
+*.elf
