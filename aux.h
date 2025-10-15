@@ -6,9 +6,15 @@
 // --------------------------------- //
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
+#include <string.h>
 
 #ifndef AUX_H
 #define AUX_H
+
+// bool
+#define TRUE 1
+#define FALSE 0
 
 // uart things
 #define BAUD 19200
@@ -33,6 +39,9 @@
 // servo
 #define DEFAULT_MIN_ANGLE 0
 #define DEFAULT_MAX_ANGLE 180
+
+// timers
+#define DEFAULT_SAMPLING FREQ 500
 
 // function declarations
 void UART_init();
