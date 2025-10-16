@@ -7,6 +7,26 @@
 
 #include "aux.h"
 
+// Prints the usage
+void usage(void) {
+    char msg[512];
+    sprintf(
+        msg,
+        "\n"
+        "===============================\n"
+        "   ARDUINO SERVO-SONAR MENU\n"
+        "===============================\n"
+        "Available commands:\n"
+        "  - show  : toggle data visualization\n"
+        "  - lock  : toggle servo orientation lock\n"
+        "  - help  : display this help message\n"
+        "  - usage : same as 'help'\n"
+        "===============================\n\n"
+    );
+
+    UART_putString(msg);
+}
+
 // starts the communication
 void UART_init() {
     UBRR0H = (uint8_t) (MYUBRR >> 8); //set baudrate

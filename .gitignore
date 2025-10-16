@@ -13,5 +13,6 @@
 *.o
 
 
-# elf files
+# build files
 *.elf
+*.hex

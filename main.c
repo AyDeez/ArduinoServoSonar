@@ -12,14 +12,24 @@ ISR(USART0_RX_vect) {
 // main
 int main() {
 
-    // enabling communication via UART
+    // enabling communication via UART and prints the usage string
     UART_init();
+    usage();
 
     // global variables
     uint8_t buf[MAX_BUFF];
     unsigned long distance;
     char* cmd;
     char* value;
+
+    // values that can be modified through UART
+    uint8_t sampling_freq = DEFAULT_SAMPLING_FREQ;
+    uint8_t min_angle = DEFAULT_MIN_ANGLE;
+    uint8_t max_angle = DEFAULT_MAX_ANGLE;
+    uint8_t sampling_angle = DEFAULT_SAMPLING_ANGLE;
+    int lock_orientation = DEFAULT_LOCK_ORIENTATION;
+    int show = SHOW_ON_SERIAL;
+
 
     // creating mask
     const uint8_t trig_mask = (1 << TRIG_BIT);
@@ -43,7 +53,16 @@ int main() {
     // while infinite loop
     while (TRUE) {
 
-        // if a command is received
+
+        /*
+        TOdo:
+            - move servo
+            - calculate distance
+            - send on serial the data
+        */
+
+
+        // if a command is received, adjust the settings
         if (interrupt_occurred) {
 
             // gets from UART the string received
@@ -56,17 +75,18 @@ int main() {
             buf[strcspn(buf, "\r\n")] = 0;
 
             // setting variables based on the command received
-            /*
-            if (strcmp(buf,)) {
-                do something
+            if (strcmp(buf,"usage")==0 || strcmp(buf,"help")==0) {
+                usage();
+            } else if (strcmp(buf,"show") == 0) {
+                show = !show;
+                UART_putString("toggled show\n");
+            } else if (strcmp(buf,"lock") == 0) {
+                lock_orientation = !lock_orientation;
+                UART_putString("toggled lock\n");
             }
-            */
-
-            // TEST
-            if (strcmp(buf, "ON") == 0) {
-                UART_putString((uint8_t*)"HELLO WORLD: ON\n");
-            } else if (strcmp(buf, "OFF") == 0) {
-                UART_putString((uint8_t*)"HELLO WORLD: OFF\n");
+            
+            else {
+                UART_putString("command not valid, type 'help' for usage.");
             }
 
         }

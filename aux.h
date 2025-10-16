@@ -8,6 +8,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifndef AUX_H
 #define AUX_H
@@ -39,11 +40,17 @@
 // servo
 #define DEFAULT_MIN_ANGLE 0
 #define DEFAULT_MAX_ANGLE 180
+#define DEFAULT_SAMPLING_ANGLE 180
+#define DEFAULT_LOCK_ORIENTATION FALSE
 
 // timers
-#define DEFAULT_SAMPLING FREQ 500
+#define DEFAULT_SAMPLING_FREQ 500
+
+// debug
+#define SHOW_ON_SERIAL FALSE
 
 // function declarations
+void usage();
 void UART_init();
 void UART_putChar(uint8_t c);
 void UART_putString(uint8_t* buf);
