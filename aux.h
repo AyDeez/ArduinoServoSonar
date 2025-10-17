@@ -10,8 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-
-#include <util/delay.h>
+#include <stdlib.h>
 
 #ifndef AUX_H
 #define AUX_H

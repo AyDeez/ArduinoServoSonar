@@ -41,7 +41,6 @@ void timer_init(uint8_t time) {
     TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52);
     int16_t ocrval=(uint16_t)(15.625*DEFAULT_SAMPLING_FREQ);
     OCR5A = ocrval;
-    TIMSK5 |= (1 << OCIE5A); // enable the timer int
 }
 
 // inits the servo and its relative timer

@@ -17,9 +17,6 @@ ISR(TIMER5_COMPA_vect) {
 // main
 int main() {
 
-    // clearing interrupt
-    cli();
-
     // initial setups
     UART_init();                        // enables communication via UART
     timer_init(DEFAULT_SAMPLING_FREQ);  // inits the timer for controlling the while loop
@@ -39,15 +36,23 @@ int main() {
     uint8_t max_angle = DEFAULT_MAX_ANGLE;
     uint8_t sampling_angle = DEFAULT_SAMPLING_ANGLE;
     bool lock_orientation = DEFAULT_LOCK_ORIENTATION;
-    bool show = SHOW_ON_SERIAL;    
+    bool show = SHOW_ON_SERIAL;
+
+    // clearing interrupt
+    cli();
+
+    // enabling the timer int
+    TIMSK5 |= (1 << OCIE5A);
 
     // setting interrupt flag
     sei();
 
     // servo set at default position
     set_servo_angle(min_angle);
-
     int current_angle = min_angle;
+
+    // DEBUG
+    int i=0;
 
     // while infinite loop
     while (true) {
@@ -56,7 +61,9 @@ int main() {
         if (timer_occurred) {
 
             // DEBUG FOR THE TIMER
-            UART_putString("hello world\n");
+            char res[16];
+            sprintf(res, "%d\n", i++);
+            UART_putString(res);
 
             // reset the timer flag
             timer_occurred = false;
@@ -101,25 +108,62 @@ int main() {
 
             // cleans the string received
             buf[strcspn(buf, "\r\n")] = 0;
+            cmd = strtok((char*)buf, " ");
+            value = strtok(NULL, " ");
 
             // setting variables based on the command received
-            if (strcmp(buf,"usage")==0 || strcmp(buf,"help")==0) {
+            if (strcmp(cmd,"usage")==0 || strcmp(cmd,"help")==0) {
                 usage();
-            } else if (strcmp(buf,"show") == 0) {
+            } else if (strcmp(cmd,"show") == 0) {
                 show = !show;
                 if (show) {
                     UART_putString("toggled show, now set TRUE\n");
                 } else {
                     UART_putString("toggled show, now set FALSE\n");
                 }
-            } else if (strcmp(buf,"lock") == 0) {
+            } else if (strcmp(cmd,"lock") == 0) {
                 lock_orientation = !lock_orientation;
                 if (lock_orientation) {
                     UART_putString("toggled lock, now set TRUE\n");
                 } else {
                     UART_putString("toggled lock, now set FALSE\n");
                 }
-            }            
+            } else if (strcmp(cmd, "sampling_frequency")==0 && value!=NULL) {
+                uint16_t ms = atoi(value);
+                if (ms>=10 && ms<=3000) {
+                    OCR5A = (uint16_t)(15.625 * ms);
+                    UART_putString("updated sampling frequency\n");
+                } else {
+                    UART_putString("invalid range (10-3000 ms)\n");
+                }
+            } else if (strcmp(cmd, "min_angle")==0 && value!=NULL) {
+                uint16_t angle = atoi(value);
+                if (angle>=DEFAULT_MIN_ANGLE && angle<=DEFAULT_MAX_ANGLE && angle<max_angle) {
+                    min_angle = angle;
+                    UART_putString("updated min angle\n");
+                } else {
+                    UART_putString("invalid min angle value\n");
+                }
+            } else if (strcmp(cmd, "max_angle")==0 && value!=NULL) {
+                uint16_t angle = atoi(value);
+                if (angle>=DEFAULT_MIN_ANGLE && angle<=DEFAULT_MAX_ANGLE && angle>min_angle) {
+                    max_angle = angle;
+                    UART_putString("updated max angle\n");
+                } else {
+                    UART_putString("invalid max angle value\n");
+                }
+            } else if (strcmp(cmd, "sampling_angle")==0 && value!=NULL) {
+                uint16_t angle = atoi(value);
+                if (angle>0 && angle<30) {
+                    sampling_angle = angle;
+                    UART_putString("updated sampling angle value\n");
+                } else {
+                    UART_putString("invalid sampling angle value\n");
+                }
+            }
+            
+            
+            
             else {
                 UART_putString("command not valid, type 'help' for usage.\n");
             }
