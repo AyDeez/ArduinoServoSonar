@@ -35,6 +35,28 @@ void UART_init() {
     UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0); //enables RX-TX
 }
 
+// inits the timer for the loop
+void timer_init(uint8_t time) {
+    TCCR5A = 0;  // set prescaler to 1024
+    TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52);
+    int16_t ocrval=(uint16_t)(15.625*DEFAULT_SAMPLING_FREQ);
+    OCR5A = ocrval;
+    TIMSK5 |= (1 << OCIE5A); // enable the timer int
+}
+
+// inits the servo and its relative timer
+void servo_init() {
+    SERVO_DDR |= (1 << SERVO_BIT);
+    //TOdo
+}
+
+// inits the ultrasonic sensor
+void sensor_init() {
+    SENSOR_DDR |= (1 << TRIG_BIT);
+    SENSOR_DDR &= ~(1 << ECHO_BIT);
+    SENSOR_PORT |= (1 << ECHO_BIT);
+}
+
 // waits for transmission completed, looping on status bit, then starts transmission
 void UART_putChar(uint8_t c) {
     while (!(UCSR0A & (1 << UDRE0)) );
@@ -72,4 +94,14 @@ uint8_t UART_getString(uint8_t* buf) {
             return buf-b0;
         }
     }
+}
+
+// sets the angle on the servo based on the microseconds
+void set_servo_angle(uint8_t angle) {
+    
+}
+
+// calculates the distance obtained from the ultrasonic sensor
+uint8_t calculate_distance() {
+    return 10;
 }

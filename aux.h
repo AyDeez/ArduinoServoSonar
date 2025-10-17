@@ -9,13 +9,12 @@
 #include <avr/interrupt.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
+
+#include <util/delay.h>
 
 #ifndef AUX_H
 #define AUX_H
-
-// bool
-#define TRUE 1
-#define FALSE 0
 
 // uart things
 #define BAUD 19200
@@ -36,25 +35,31 @@
 #define SERVO_BIT 4
 #define SERVO_DDR DDRB
 #define SERVO_PORT PORTB
+#define SERVO_PIN PINB
 
 // servo
 #define DEFAULT_MIN_ANGLE 0
 #define DEFAULT_MAX_ANGLE 180
-#define DEFAULT_SAMPLING_ANGLE 180
-#define DEFAULT_LOCK_ORIENTATION FALSE
+#define DEFAULT_SAMPLING_ANGLE 10
+#define DEFAULT_LOCK_ORIENTATION false
 
 // timers
 #define DEFAULT_SAMPLING_FREQ 500
 
 // debug
-#define SHOW_ON_SERIAL FALSE
+#define SHOW_ON_SERIAL false
 
 // function declarations
 void usage();
 void UART_init();
+void timer_init(uint8_t time);
+void servo_init();
+void sensor_init();
 void UART_putChar(uint8_t c);
 void UART_putString(uint8_t* buf);
 uint8_t UART_getChar();
 uint8_t UART_getString(uint8_t* buf);
+void set_servo_angle(uint8_t angle);
+uint8_t calculate_distance();
 
 #endif

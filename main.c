@@ -1,20 +1,31 @@
 #include "aux.h"
 
 // global flags
-volatile int interrupt_occurred = FALSE;
-volatile int timer_occurred = TRUE;
+volatile bool interrupt_occurred = false;
+volatile bool timer_occurred = true;
 
 // UART interrupt routine installation
 ISR(USART0_RX_vect) {
-    interrupt_occurred = TRUE;
+    interrupt_occurred = true;
+}
+
+// timer interrupt routine installation
+ISR(TIMER5_COMPA_vect) {
+    timer_occurred = true;
 }
 
 // main
 int main() {
 
-    // enabling communication via UART and prints the usage string
-    UART_init();
-    usage();
+    // clearing interrupt
+    cli();
+
+    // initial setups
+    UART_init();                        // enables communication via UART
+    timer_init(DEFAULT_SAMPLING_FREQ);  // inits the timer for controlling the while loop
+    servo_init();                       // sets the servo as output
+    sensor_init();                      // sets the sensor as input/output
+    usage();                            // prints the usage on the serial
 
     // global variables
     uint8_t buf[MAX_BUFF];
@@ -27,40 +38,57 @@ int main() {
     uint8_t min_angle = DEFAULT_MIN_ANGLE;
     uint8_t max_angle = DEFAULT_MAX_ANGLE;
     uint8_t sampling_angle = DEFAULT_SAMPLING_ANGLE;
-    int lock_orientation = DEFAULT_LOCK_ORIENTATION;
-    int show = SHOW_ON_SERIAL;
-
-
-    // creating mask
-    const uint8_t trig_mask = (1 << TRIG_BIT);
-    const uint8_t echo_mask = (1 << ECHO_BIT);
-    const uint8_t servo_mask = (1 << SERVO_BIT);
-
-    // defining input/output
-    SENSOR_DDR |= trig_mask;
-    SERVO_DDR |= servo_mask;
-    SENSOR_DDR &= ~echo_mask;
-
-    // pullup resistor for echo input
-    SENSOR_PORT |= echo_mask;
-
-    // clearing interrupt
-    cli();
+    bool lock_orientation = DEFAULT_LOCK_ORIENTATION;
+    bool show = SHOW_ON_SERIAL;    
 
     // setting interrupt flag
     sei();
 
+    // servo set at default position
+    set_servo_angle(min_angle);
+
+    int current_angle = min_angle;
+
     // while infinite loop
-    while (TRUE) {
+    while (true) {
 
+        // if sampling freq is reached
+        if (timer_occurred) {
 
-        /*
-        TOdo:
-            - move servo
-            - calculate distance
-            - send on serial the data
-        */
+            // DEBUG FOR THE TIMER
+            UART_putString("hello world\n");
 
+            // reset the timer flag
+            timer_occurred = false;
+
+            // if lock flag is FALSE, move the servo
+            if (!lock_orientation) {
+
+                // if rotation is not complete, go ahead
+                if (current_angle+sampling_angle < max_angle) {
+                    current_angle += sampling_angle;
+                }
+
+                // else invert and go backwards
+                else {
+                    sampling_angle = -sampling_angle;
+                    current_angle += sampling_angle;
+                }
+
+                // move the servo
+                set_servo_angle(current_angle);
+            }
+
+            // obtain the distance from the sensor
+            distance = calculate_distance();
+
+            // finally, if show flag is TRUE, print on serial the distance
+            if (show) {
+                char res[16];
+                sprintf(res, "%lu\n", distance);
+                UART_putString(res);
+            }
+        }
 
         // if a command is received, adjust the settings
         if (interrupt_occurred) {
@@ -69,7 +97,7 @@ int main() {
             UART_getString(buf);
 
             // reset the interrupt flag
-            interrupt_occurred = FALSE;
+            interrupt_occurred = false;
 
             // cleans the string received
             buf[strcspn(buf, "\r\n")] = 0;
@@ -79,14 +107,21 @@ int main() {
                 usage();
             } else if (strcmp(buf,"show") == 0) {
                 show = !show;
-                UART_putString("toggled show\n");
+                if (show) {
+                    UART_putString("toggled show, now set TRUE\n");
+                } else {
+                    UART_putString("toggled show, now set FALSE\n");
+                }
             } else if (strcmp(buf,"lock") == 0) {
                 lock_orientation = !lock_orientation;
-                UART_putString("toggled lock\n");
-            }
-            
+                if (lock_orientation) {
+                    UART_putString("toggled lock, now set TRUE\n");
+                } else {
+                    UART_putString("toggled lock, now set FALSE\n");
+                }
+            }            
             else {
-                UART_putString("command not valid, type 'help' for usage.");
+                UART_putString("command not valid, type 'help' for usage.\n");
             }
 
         }
