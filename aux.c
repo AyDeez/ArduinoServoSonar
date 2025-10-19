@@ -24,7 +24,7 @@ void usage(void) {
         "===============================\n\n"
     );
 
-    UART_putString(msg);
+    UART_putString((uint8_t*)msg);
 }
 
 // starts the communication
@@ -36,10 +36,10 @@ void UART_init() {
 }
 
 // inits the timer for the loop
-void timer_init(uint8_t time) {
+void timer_init(int time) {
     TCCR5A = 0;  // set prescaler to 1024
     TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52);
-    int16_t ocrval=(uint16_t)(15.625*DEFAULT_SAMPLING_FREQ);
+    int16_t ocrval=(uint16_t)(15.625*time);
     OCR5A = ocrval;
 }
 
@@ -101,6 +101,6 @@ void set_servo_angle(uint8_t angle) {
 }
 
 // calculates the distance obtained from the ultrasonic sensor
-uint8_t calculate_distance() {
+int calculate_distance() {
     return 10;
 }

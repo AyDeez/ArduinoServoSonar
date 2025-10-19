@@ -51,7 +51,7 @@
 // function declarations
 void usage();
 void UART_init();
-void timer_init(uint8_t time);
+void timer_init(int time);
 void servo_init();
 void sensor_init();
 void UART_putChar(uint8_t c);
@@ -59,6 +59,6 @@ void UART_putString(uint8_t* buf);
 uint8_t UART_getChar();
 uint8_t UART_getString(uint8_t* buf);
 void set_servo_angle(uint8_t angle);
-uint8_t calculate_distance();
+int calculate_distance();
 
 #endif

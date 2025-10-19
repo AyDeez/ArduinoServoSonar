@@ -31,7 +31,6 @@ int main() {
     char* value;
 
     // values that can be modified through UART
-    uint8_t sampling_freq = DEFAULT_SAMPLING_FREQ;
     uint8_t min_angle = DEFAULT_MIN_ANGLE;
     uint8_t max_angle = DEFAULT_MAX_ANGLE;
     uint8_t sampling_angle = DEFAULT_SAMPLING_ANGLE;
@@ -63,7 +62,7 @@ int main() {
             // DEBUG FOR THE TIMER
             char res[16];
             sprintf(res, "%d\n", i++);
-            UART_putString(res);
+            UART_putString((uint8_t*)res);
 
             // reset the timer flag
             timer_occurred = false;
@@ -93,7 +92,7 @@ int main() {
             if (show) {
                 char res[16];
                 sprintf(res, "%lu\n", distance);
-                UART_putString(res);
+                UART_putString((uint8_t*)res);
             }
         }
 
@@ -107,7 +106,7 @@ int main() {
             interrupt_occurred = false;
 
             // cleans the string received
-            buf[strcspn(buf, "\r\n")] = 0;
+            buf[strcspn((char*)buf, "\r\n")] = 0;
             cmd = strtok((char*)buf, " ");
             value = strtok(NULL, " ");
 
@@ -117,55 +116,59 @@ int main() {
             } else if (strcmp(cmd,"show") == 0) {
                 show = !show;
                 if (show) {
-                    UART_putString("toggled show, now set TRUE\n");
+                    UART_putString((uint8_t*)"toggled show, now set TRUE\n");
                 } else {
-                    UART_putString("toggled show, now set FALSE\n");
+                    UART_putString((uint8_t*)"toggled show, now set FALSE\n");
                 }
             } else if (strcmp(cmd,"lock") == 0) {
                 lock_orientation = !lock_orientation;
                 if (lock_orientation) {
-                    UART_putString("toggled lock, now set TRUE\n");
+                    UART_putString((uint8_t*)"toggled lock, now set TRUE\n");
                 } else {
-                    UART_putString("toggled lock, now set FALSE\n");
+                    UART_putString((uint8_t*)"toggled lock, now set FALSE\n");
                 }
             } else if (strcmp(cmd, "sampling_frequency")==0 && value!=NULL) {
                 uint16_t ms = atoi(value);
                 if (ms>=10 && ms<=3000) {
-                    OCR5A = (uint16_t)(15.625 * ms);
-                    UART_putString("updated sampling frequency\n");
+                    TCNT5 = 0; //reset the counter
+                    OCR5A = (uint16_t)(15.625*ms); //new value for the timer
+                    cli(); //clear interrupt
+                    TIMSK5 |= (1 << OCIE5A); //enabling timer int
+                    sei(); //set interrupt
+                    UART_putString((uint8_t*)"updated sampling frequency\n");
                 } else {
-                    UART_putString("invalid range (10-3000 ms)\n");
+                    UART_putString((uint8_t*)"invalid range (10-3000 ms)\n");
                 }
             } else if (strcmp(cmd, "min_angle")==0 && value!=NULL) {
                 uint16_t angle = atoi(value);
                 if (angle>=DEFAULT_MIN_ANGLE && angle<=DEFAULT_MAX_ANGLE && angle<max_angle) {
                     min_angle = angle;
-                    UART_putString("updated min angle\n");
+                    UART_putString((uint8_t*)"updated min angle\n");
                 } else {
-                    UART_putString("invalid min angle value\n");
+                    UART_putString((uint8_t*)"invalid min angle value\n");
                 }
             } else if (strcmp(cmd, "max_angle")==0 && value!=NULL) {
                 uint16_t angle = atoi(value);
                 if (angle>=DEFAULT_MIN_ANGLE && angle<=DEFAULT_MAX_ANGLE && angle>min_angle) {
                     max_angle = angle;
-                    UART_putString("updated max angle\n");
+                    UART_putString((uint8_t*)"updated max angle\n");
                 } else {
-                    UART_putString("invalid max angle value\n");
+                    UART_putString((uint8_t*)"invalid max angle value\n");
                 }
             } else if (strcmp(cmd, "sampling_angle")==0 && value!=NULL) {
                 uint16_t angle = atoi(value);
                 if (angle>0 && angle<30) {
                     sampling_angle = angle;
-                    UART_putString("updated sampling angle value\n");
+                    UART_putString((uint8_t*)"updated sampling angle value\n");
                 } else {
-                    UART_putString("invalid sampling angle value\n");
+                    UART_putString((uint8_t*)"invalid sampling angle value\n");
                 }
             }
             
             
             
             else {
-                UART_putString("command not valid, type 'help' for usage.\n");
+                UART_putString((uint8_t*)"command not valid, type 'help' for usage.\n");
             }
 
         }
