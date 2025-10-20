@@ -7,25 +7,27 @@
 
 #include "aux.h"
 
-// prints the usage
+// Prints the available commands and their description
 void usage(void) {
-    char msg[512];
-    sprintf(
-        msg,
+    char msg[] =
         "\n"
-        "===============================\n"
-        "   ARDUINO SERVO-SONAR MENU\n"
-        "===============================\n"
-        "Available commands:\n"
-        "  - show  : toggle data visualization\n"
-        "  - lock  : toggle servo orientation lock\n"
-        "  - help  : display this help message\n"
-        "  - usage : same as 'help'\n"
-        "===============================\n\n"
-    );
+        "=========================================\n"
+        "        ARDUINO SERVO-SONAR MENU\n"
+        "=========================================\n"
+        "Commands:\n"
+        "  show                     -> toggle data visualization\n"
+        "  lock                     -> toggle servo orientation lock\n"
+        "  sampling_frequency <val> -> set new sampling frequency (ms)\n"
+        "  max_angle <val>          -> set maximum servo angle (degrees)\n"
+        "  min_angle <val>          -> set minimum servo angle (degrees)\n"
+        "  sampling_angle <val>     -> set new servo sampling angle (degrees)\n"
+        "  help                     -> display this help message\n"
+        "  usage                    -> same as 'help'\n"
+        "=========================================\n\n";
 
     UART_putString((uint8_t*)msg);
 }
+
 
 // starts the communication
 void UART_init() {
