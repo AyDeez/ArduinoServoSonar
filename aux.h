@@ -29,6 +29,7 @@
 #define ECHO_BIT 5
 #define SENSOR_DDR DDRB
 #define SENSOR_PORT PORTB
+#define SENSOR_PIN PINB
 
 // servo on pin 10
 #define SERVO_BIT 4
@@ -45,6 +46,9 @@
 // timers
 #define DEFAULT_SAMPLING_FREQ 500
 
+// enums
+typedef enum { IDLE, EMITTED, WAITING, READY } sensor_state;
+
 // debug
 #define SHOW_ON_SERIAL false
 
@@ -59,6 +63,8 @@ void UART_putString(uint8_t* buf);
 uint8_t UART_getChar();
 uint8_t UART_getString(uint8_t* buf);
 void set_servo_angle(uint8_t angle);
-int calculate_distance();
+uint16_t measure_echo();
+void wait_us(uint16_t us);
+void wait_ms(uint16_t ms);
 
 #endif

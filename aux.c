@@ -7,7 +7,7 @@
 
 #include "aux.h"
 
-// Prints the usage
+// prints the usage
 void usage(void) {
     char msg[512];
     sprintf(
@@ -37,7 +37,7 @@ void UART_init() {
 
 // inits the timer for the loop
 void timer_init(int time) {
-    TCCR5A = 0;  // set prescaler to 1024
+    TCCR5A = 0; // set prescaler to 1024
     TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52);
     int16_t ocrval=(uint16_t)(15.625*time);
     OCR5A = ocrval;
@@ -46,7 +46,8 @@ void timer_init(int time) {
 // inits the servo and its relative timer
 void servo_init() {
     SERVO_DDR |= (1 << SERVO_BIT);
-    //TOdo
+    //OC1A for compare
+    
 }
 
 // inits the ultrasonic sensor
@@ -54,6 +55,8 @@ void sensor_init() {
     SENSOR_DDR |= (1 << TRIG_BIT);
     SENSOR_DDR &= ~(1 << ECHO_BIT);
     SENSOR_PORT |= (1 << ECHO_BIT);
+    TCCR1A = 0;
+    TCCR1B = (1 << CS11);
 }
 
 // waits for transmission completed, looping on status bit, then starts transmission
@@ -97,10 +100,31 @@ uint8_t UART_getString(uint8_t* buf) {
 
 // sets the angle on the servo based on the microseconds
 void set_servo_angle(uint8_t angle) {
-    
+
 }
 
-// calculates the distance obtained from the ultrasonic sensor
-int calculate_distance() {
-    return 10;
+// waits for a fixed amount of time
+void wait_us(uint16_t us) {
+    TCCR1A = 0;
+    TCCR1B = (1 << CS11);  // set prescaler 8, more precise for us
+    TCNT1 = 0;  // reset timer
+
+    // calculates the amount of ticks: F_CPU / prescaler / how many us in a second * us
+    uint32_t total_ticks = ((uint32_t)F_CPU/8) / 1000000UL * us;
+
+    while (TCNT1 < total_ticks); // waits for the ticks to complete
+}
+
+void wait_ms(uint16_t ms) {
+    TCCR1A = 0;
+    TCCR1B = (1 << CS11) | (1 << CS10); // set prescaler 64, able to cover high delays
+    TCNT1 = 0; // reset timer
+
+    // calculates the amount of ticks per ms: F_CPU / prescaler / how many ms in a second
+    uint16_t ticks_per_ms = F_CPU/64/1000;
+
+    for(uint16_t i = 0; i < ms; i++) {
+        TCNT1 = 0; // reset timer
+        while(TCNT1 < ticks_per_ms); // while stops the iteration for every ms
+    }
 }

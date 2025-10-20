@@ -9,7 +9,7 @@ ISR(USART0_RX_vect) {
     interrupt_occurred = true;
 }
 
-// timer interrupt routine installation
+// timer5 interrupt routine installation
 ISR(TIMER5_COMPA_vect) {
     timer_occurred = true;
 }
@@ -26,7 +26,7 @@ int main() {
 
     // global variables
     uint8_t buf[MAX_BUFF];
-    unsigned long distance;
+    unsigned int distance;
     char* cmd;
     char* value;
 
@@ -50,19 +50,11 @@ int main() {
     set_servo_angle(min_angle);
     int current_angle = min_angle;
 
-    // DEBUG
-    int i=0;
-
     // while infinite loop
     while (true) {
 
         // if sampling freq is reached
         if (timer_occurred) {
-
-            // DEBUG FOR THE TIMER
-            char res[16];
-            sprintf(res, "%d\n", i++);
-            UART_putString((uint8_t*)res);
 
             // reset the timer flag
             timer_occurred = false;
@@ -85,13 +77,27 @@ int main() {
                 set_servo_angle(current_angle);
             }
 
-            // obtain the distance from the sensor
-            distance = calculate_distance();
+            // emit the signal from trig on sensor
+            SENSOR_PORT &= ~(1 << TRIG_BIT); //low
+            wait_us(2);
+            SENSOR_PORT |= (1 << TRIG_BIT); //high
+            wait_us(10);
+            SENSOR_PORT &= ~(1 << TRIG_BIT); //low
+
+            // calculate the distance based on time and speed of sound
+            unsigned long count = 0;
+            while (!(SENSOR_PIN & (1<<ECHO_BIT))); //wait high
+            while (SENSOR_PIN & (1<<ECHO_BIT)) {
+                wait_us(1);
+                count++;
+                if (count > 60000) break; //timeout, some error occured
+            }
+            distance = (count * 0.0343) / 2;
 
             // finally, if show flag is TRUE, print on serial the distance
             if (show) {
                 char res[16];
-                sprintf(res, "%lu\n", distance);
+                sprintf(res, "%u\n", distance);
                 UART_putString((uint8_t*)res);
             }
         }
@@ -163,6 +169,9 @@ int main() {
                 } else {
                     UART_putString((uint8_t*)"invalid sampling angle value\n");
                 }
+            } else if (strcmp(cmd,"servo")==0 && value!=NULL) {
+                set_servo_angle(atoi(value));
+                UART_putString((uint8_t*)"servo set");
             }
             
             
