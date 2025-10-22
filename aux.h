@@ -19,7 +19,6 @@
 #define BAUD 19200
 #define F_CPU 16000000UL
 #define MYUBRR (F_CPU/16/BAUD-1)
-#define MAX_BUFF 256
 
 // communication
 #define MAX_BUFF 256

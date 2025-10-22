@@ -1,12 +1,14 @@
 #include "aux.h"
 
-// global flags
+// global flags and variables
 volatile bool interrupt_occurred = false;
 volatile bool timer_occurred = true;
+uint8_t buf[MAX_BUFF];
 
 // UART interrupt routine installation
 ISR(USART0_RX_vect) {
     interrupt_occurred = true;
+    UART_getString(buf);
 }
 
 // timer5 interrupt routine installation
@@ -22,10 +24,9 @@ int main() {
     timer_init(DEFAULT_SAMPLING_FREQ);  // inits the timer for controlling the while loop
     servo_init();                       // sets the servo as output
     sensor_init();                      // sets the sensor as input/output
-    usage();                            // prints the usage on the serial
+    //usage();                            // prints the usage on the serial
 
-    // global variables
-    uint8_t buf[MAX_BUFF];
+    // variables
     unsigned int distance;
     char* cmd;
     char* value;
@@ -103,10 +104,7 @@ int main() {
         }
 
         // if a command is received, adjust the settings
-        if (interrupt_occurred) {
-
-            // gets from UART the string received
-            UART_getString(buf);
+        if (interrupt_occurred) {            
 
             // reset the interrupt flag
             interrupt_occurred = false;
@@ -169,9 +167,14 @@ int main() {
                 } else {
                     UART_putString((uint8_t*)"invalid sampling angle value\n");
                 }
-            } else if (strcmp(cmd,"servo")==0 && value!=NULL) {
+            } else if (strcmp(cmd, "exit") == 0) {
+                UART_putString((uint8_t*)"exit\n");
+            }
+            
+            
+            else if (strcmp(cmd,"servo")==0 && value!=NULL) {
                 set_servo_angle(atoi(value));
-                UART_putString((uint8_t*)"servo set");
+                UART_putString((uint8_t*)"servo set\n");
             }
             
             

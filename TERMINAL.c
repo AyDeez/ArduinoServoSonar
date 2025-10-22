@@ -6,33 +6,32 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/wait.h>
-
-
+#include <sys/select.h>
 
 int serial_set_interface_attribs(int fd, int speed, int parity);
 
-
-
 int main() {
 
-    // list available devices
-    char devices[128];
+    // show available devices
     printf("available devices:\n");
     system("ls /dev/ttyACM* 2>/dev/null");
 
-    // user enters the device name
+    // user enters device name, limiting to 63 characters
     char device_name[64];
-    printf("enter the devide name: ");
+    printf("enter the device name: ");
     scanf("%63s", device_name);
 
-    // connecting to the serial
+    // opening the serial
     int serial_fd = open(device_name, O_RDWR | O_NOCTTY | O_SYNC);
     if (serial_fd == -1) {
         printf("error %d opening serial, fd %d\n", errno, serial_fd);
-        return 1;
+        return -1;
     }
 
-    // setting the device preferences
+    // cleaning everything left in memory
+    tcflush(serial_fd, TCIOFLUSH);
+
+    // setting up parameters for the serial device
     if (serial_set_interface_attribs(serial_fd, 19200, 0) != 0) {
         printf("error in serial_set_interface_attribs\n");
         return -1;
@@ -41,8 +40,9 @@ int main() {
     // debug
     printf("connection open on %s\n", device_name);
 
-    // fork for separating processes
+    // creating fork processes
     pid_t pid = fork();
+    int status;
     if (pid < 0) {
         printf("error with fork\n");
         return -1;
@@ -51,37 +51,46 @@ int main() {
     // child process for sending data
     if (pid == 0) {
         char msg[128];
-
         while (1) {
-
+            fgets(msg, sizeof(msg), stdin);
+            write(serial_fd, msg, strlen(msg));
+            if (strcmp(msg, "exit\n") == 0) break;
         }
-
         close(serial_fd);
         exit(0);
 
+    // parent process for receiving data
+    } else {
+        FILE* serial_file = fdopen(serial_fd, "r");
+        if (!serial_file) {
+            printf("error while converting serial file descriptor to FILE*\n");
+            return -1;
+        }
+        char line[256];
+        while (fgets(line, sizeof(line), serial_file)) {
+            printf("[RX]: %s", line);
+            fflush(stdout);
+            if (strcmp(line, "exit\n") == 0) break;
+        }
+        fclose(serial_file);
+        close(serial_fd);
+        wait(&status);
     }
-    
-    // father process for receiving data
-    else {
 
-        char buffer[128];
-
-    }
-
-    // return success
     return 0;
-
 }
 
 
 
+// serial setters
 int serial_set_interface_attribs(int fd, int speed, int parity) {
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if (tcgetattr(fd,&tty) != 0) {
-        printf("error %d from tcgetattr", errno);
+        printf("error %d from tcgetattr\n", errno);
         return -1;
     }
+
     switch (speed) {
         case 19200:
             speed = B19200;
@@ -98,13 +107,13 @@ int serial_set_interface_attribs(int fd, int speed, int parity) {
     cfsetispeed(&tty,speed);
     cfmakeraw(&tty);
 
-    //enable reading
     tty.c_cflag &= ~(PARENB | PARODD);
     tty.c_cflag |= parity;
     tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;
+    tty.c_cflag |= CREAD | CLOCAL;
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        printf("error %d from tcsetattr", errno);
+        printf("error %d from tcsetattr\n", errno);
         return -1;
     }
 
