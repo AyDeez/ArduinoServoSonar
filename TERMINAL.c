@@ -98,7 +98,8 @@ int main() {
             
             // else if it is data from the sensor, save it to a file
             else {
-                fprintf(output, line);
+                char* ptr = strchr(line, ',');
+                fprintf(output, ptr+1);
                 fflush(output);
             }
             fflush(stdout);
