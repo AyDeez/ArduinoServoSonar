@@ -5,10 +5,12 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/wait.h>
 #include <sys/select.h>
 
 int serial_set_interface_attribs(int fd, int speed, int parity);
+bool is_log(char* s);
 
 int main() {
 
@@ -61,17 +63,49 @@ int main() {
 
     // parent process for receiving data
     } else {
+
+        // creating file for output
+        FILE* output = fopen("output.log", "w");
+        if (!output) {
+            printf("error while creating output file\n");
+            return -1;
+        }
+
+        // opening xterm for showing output
+        pid_t p = fork();
+        if (p == 0) {
+            execlp("xterm", "xterm", "-hold", "-e", "tail", "-f", "output.log", NULL);
+            printf("error opening xterm\n");
+            return -1;
+        }
+
+        // converting from file descriptor to FILE*
         FILE* serial_file = fdopen(serial_fd, "r");
         if (!serial_file) {
             printf("error while converting serial file descriptor to FILE*\n");
             return -1;
         }
+
         char line[256];
         while (fgets(line, sizeof(line), serial_file)) {
-            printf("[RX]: %s", line);
-            fflush(stdout);
+
             if (strcmp(line, "exit\n") == 0) break;
+            
+            // if string received is a log string, print in the main terminal
+            if (is_log(line)) {
+                printf("[LOG]: %s", line);
+            }
+            
+            // else if it is data from the sensor, save it to a file
+            else {
+                fprintf(output, line);
+                fflush(output);
+            }
+            fflush(stdout);
         }
+
+        kill(p,SIGTERM);
+        fclose(output);
         fclose(serial_file);
         close(serial_fd);
         wait(&status);
@@ -118,4 +152,11 @@ int serial_set_interface_attribs(int fd, int speed, int parity) {
     }
 
     return 0;
+}
+
+bool is_log(char* s) {
+    if (s[0] == '0') {
+        return false;
+    }
+    return true;
 }

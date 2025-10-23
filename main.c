@@ -98,7 +98,7 @@ int main() {
             // finally, if show flag is TRUE, print on serial the distance
             if (show) {
                 char res[16];
-                sprintf(res, "%u\n", distance);
+                sprintf(res, "0,%u\n", distance);
                 UART_putString((uint8_t*)res);
             }
         }
