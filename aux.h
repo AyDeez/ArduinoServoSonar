@@ -23,27 +23,28 @@
 // communication
 #define MAX_BUFF 256
 
-// trig on pin12 & echo on pin11
+// trig(green) on pin12 & echo(yellow) on pin11
 #define TRIG_BIT 6
 #define ECHO_BIT 5
 #define SENSOR_DDR DDRB
 #define SENSOR_PORT PORTB
 #define SENSOR_PIN PINB
 
-// servo on pin 10
-#define SERVO_BIT 4
-#define SERVO_DDR DDRB
-#define SERVO_PORT PORTB
-#define SERVO_PIN PINB
+// servo on pin 5
+#define SERVO_BIT 3
+#define SERVO_DDR DDRE
+#define SERVO_PORT PORTE
+#define SERVO_PIN PINE
 
 // servo
 #define DEFAULT_MIN_ANGLE 0
 #define DEFAULT_MAX_ANGLE 180
 #define DEFAULT_SAMPLING_ANGLE 10
-#define DEFAULT_LOCK_ORIENTATION false
+#define DEFAULT_LOCK_ORIENTATION true
+#define SERVO_FREQ 50
 
 // timers
-#define DEFAULT_SAMPLING_FREQ 500
+#define DEFAULT_SAMPLING_FREQ 200
 
 // enums
 typedef enum { IDLE, EMITTED, WAITING, READY } sensor_state;

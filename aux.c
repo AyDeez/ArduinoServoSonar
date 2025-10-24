@@ -48,8 +48,11 @@ void timer_init(int time) {
 // inits the servo and its relative timer
 void servo_init() {
     SERVO_DDR |= (1 << SERVO_BIT);
-    //OC1A for compare
-    
+
+    TCCR3A = (1 << COM3A1) | (1 << WGM31);
+    TCCR3B = (1 << WGM33) | (1 << WGM32) | (1 << CS31); // set prescaler to 8
+
+    ICR3 = 39999; // 50 Hz
 }
 
 // inits the ultrasonic sensor
@@ -57,8 +60,6 @@ void sensor_init() {
     SENSOR_DDR |= (1 << TRIG_BIT);
     SENSOR_DDR &= ~(1 << ECHO_BIT);
     SENSOR_PORT |= (1 << ECHO_BIT);
-    TCCR1A = 0;
-    TCCR1B = (1 << CS11);
 }
 
 // waits for transmission completed, looping on status bit, then starts transmission
@@ -102,13 +103,15 @@ uint8_t UART_getString(uint8_t* buf) {
 
 // sets the angle on the servo based on the microseconds
 void set_servo_angle(uint8_t angle) {
-
+    if (angle < 0) { angle = 0; }
+    if (angle > 180) { angle = 180; }
+    OCR3A = (uint16_t) (1000 + ((uint32_t)angle * (5000-1000)) / 180);
 }
 
 // waits for a fixed amount of time
 void wait_us(uint16_t us) {
     TCCR1A = 0;
-    TCCR1B = (1 << CS11);  // set prescaler 8, more precise for us
+    TCCR1B = (1 << CS11);  // set prescaler 8
     TCNT1 = 0;  // reset timer
 
     // calculates the amount of ticks: F_CPU / prescaler / how many us in a second * us
@@ -119,7 +122,7 @@ void wait_us(uint16_t us) {
 
 void wait_ms(uint16_t ms) {
     TCCR1A = 0;
-    TCCR1B = (1 << CS11) | (1 << CS10); // set prescaler 64, able to cover high delays
+    TCCR1B = (1 << CS11) | (1 << CS10); // set prescaler 64
     TCNT1 = 0; // reset timer
 
     // calculates the amount of ticks per ms: F_CPU / prescaler / how many ms in a second

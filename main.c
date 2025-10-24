@@ -3,6 +3,7 @@
 // global flags and variables
 volatile bool interrupt_occurred = false;
 volatile bool timer_occurred = true;
+int direction = 1;
 uint8_t buf[MAX_BUFF];
 
 // UART interrupt routine installation
@@ -48,8 +49,8 @@ int main() {
     sei();
 
     // servo set at default position
-    set_servo_angle(min_angle);
     int current_angle = min_angle;
+    set_servo_angle(current_angle);
 
     // while infinite loop
     while (true) {
@@ -63,17 +64,14 @@ int main() {
             // if lock flag is FALSE, move the servo
             if (!lock_orientation) {
 
-                // if rotation is not complete, go ahead
-                if (current_angle+sampling_angle < max_angle) {
-                    current_angle += sampling_angle;
-                }
+                current_angle += sampling_angle * direction;
 
-                // else invert and go backwards
-                else {
-                    sampling_angle = -sampling_angle;
-                    current_angle += sampling_angle;
+                if (current_angle >= max_angle) {
+                    direction = -1;
+                } else if (current_angle <= min_angle) {
+                    direction = 1;
                 }
-
+                
                 // move the servo
                 set_servo_angle(current_angle);
             }
@@ -169,17 +167,10 @@ int main() {
                 }
             } else if (strcmp(cmd, "exit") == 0) {
                 UART_putString((uint8_t*)"exit\n");
-            }
-            
-            
-            else if (strcmp(cmd,"servo")==0 && value!=NULL) {
+            } else if (strcmp(cmd,"servo")==0 && value!=NULL) {
                 set_servo_angle(atoi(value));
                 UART_putString((uint8_t*)"servo set\n");
-            }
-            
-            
-            
-            else {
+            } else {
                 UART_putString((uint8_t*)"command not valid, type 'help' for usage.\n");
             }
 
